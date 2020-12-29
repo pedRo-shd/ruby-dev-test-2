@@ -10,17 +10,20 @@ RSpec.describe Player, type: :model do
     expect(player).to_not be_valid
   end
 
-  context 'when the player is of two albums' do
+  context 'when there is already an player queries of the albums before HABTM' do
     before do
       @player_maddona = Player.create(name: 'Maddona')
-      @album_madame_x = Album.create(name: 'Madame X', player: @player_maddona)
+      @album_madame_x = Album.create(name: 'Madame X', player_id: @player_maddona.id)
       @album_american_life =
-        Album.create(name: 'American Life', player: @player_maddona)
+        Album.create(name: 'American Life', player_id: @player_maddona.id)
     end
 
-    it 'have albums Madame X and American Life' do
-      expect(@player_maddona.albums.first).to eql(@album_madame_x)
-      expect(@player_maddona.albums.last).to eql(@album_american_life)
+    it 'player must have albums Madame X and American Life' do
+      basic_sql =
+        "SELECT DISTINCT * FROM players LEFT OUTER JOIN albums ON albums.player_id = 1"
+      records_array = ActiveRecord::Base.connection.execute(basic_sql)
+      expect(records_array.first["name"]).to eql(@album_madame_x.name)
+      expect(records_array.last["name"]).to eql(@album_american_life.name)
     end
   end
 end
